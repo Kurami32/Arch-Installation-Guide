@@ -16,8 +16,8 @@
 - Yay AUR Helper
 - DE or WM of your choice! (Hyprland, KDE Plasma, Cosmic)
 
-> If you want a quick guide with only the commands straight to the installation, you can visit my [Quick Install guide](https://github.com)
-> 
+> If you want a quick guide with only the commands straight to the installation, you can visit my [Quick Install guide](https://github.com/Kurami32/) (Not available yet)
+
 ## 1. Pre-installation
 
 ### 1.1 Prepare USB Install Media
