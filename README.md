@@ -3,8 +3,6 @@
 > Arch Linux Installation guide by `kurami` on 2025-05-15.
 
 ![Arch](assets/ArchLinux.jpg)
-
- **Arch Linux** is an veery good Linux distro for a hands-on, daily use system when you are curious and motivated (you like tinkering)
  
  Below is how I install Arch following the [Arch's installation guide](https://wiki.archlinux.org/title/Installation_guide) and the choices I do when installing a minimal Arch environment with:
 
@@ -149,40 +147,38 @@ timedatectl status # Check if the system time is correct.
 Identify the internal storage device where Arch Linux will be installed by running `lsblk`, the output will be something like this:
 
 ```shell
-$ lsblk
-NAME       MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
-loop0        7:0    0 846.7M  1 loop /run/archiso/airootfs
-sda          8:0    0 465.8G  0 disk 
-├─sda1       8:1    0   512M  0 part 
-├─sda2       8:2    0   512M  0 part 
-├─sda3       8:3    0     4G  0 part 
-└─sda4       8:4    0 460.8G  0 part 
-sdb          8:16   1  28.9G  0 disk 
-├─sdb1       8:17   1  28.8G  0 part 
-│ └─ventoy 253:0    0   1.2G  1 dm   
-└─sdb2       8:18   1    32M  0 part 
-sr0         11:0    1  1024M  0 rom 
+root@archiso ~ # lsblk
+NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+loop0         7:0    0 942.7M  1 loop /run/archiso/airootfs
+sda           8:0    1  28.9G  0 disk 
+├─sda1        8:1    1  28.8G  0 part 
+│ └─ventoy  253:0    0   1.3G  1 dm   
+└─sda2        8:2    1    32M  0 part 
+nvme0n1     259:0    0 953.9G  0 disk 
+├─nvme0n1p1 259:1    0     1G  0 part 
+├─nvme0n1p2 259:2    0     2G  0 part 
+└─nvme0n1p3 259:3    0 950.9G  0 part 
 ```
 
-> External disks are mostly `sdb` like in this output, where my USB formatted with ventoy containing the Arch Live Enviroment. **BE CAREFUL**, , you may have other drives too where you store other data, don't select the wrong drive because will be wiped and **ALL** the data there will be lost.
+> External disks are mostly `sdb`, but in my case the live USB formatted with ventoy containing the Arch ISO is `sda`. **BE CAREFUL**, you may have other drives too where you store other data, don't select the wrong drive because will be wiped, and **ALL** the data there will be lost.
 
 ### 1.8. Delete Old Partition Tables
 
-*Example:* In my case my target disk for the installation is identified as `sda`where we'll install Arch Linux. Replace it with your target disk.
+*Example:* In my case my target disk for the installation is identified as `nvme0n1` where we'll install Arch Linux. Replace it with your target disk.
 
 ```shell
-wipefs -af /dev/sda
-sgdisk --zap-all --clear /dev/sda
-partprobe /dev/sda
+wipefs -af /dev/nvme0n1
+sgdisk --zap-all --clear /dev/nvme0n1
+partprobe /dev/nvme0n1
 ```
 
 ### 1.9. Partition the Disk
 
 We will use `gdisk` for this purpose. 
-> ***Note***: We will create the [EFI] and [BOOT] partitions as separate ones, because our system will be encrypted, and we need to have them unenencrypted for the bootloader (GRUB) could access to it.
+> ***Note***: We will have two partitions [BOOT] and [ROOT], the encrypted partiton will be [ROOT], and [BOOT] unenencrypted for the bootloader (GRUB) could access to it.
 
 ```shell
-root@archiso ~ # gdisk /dev/sda
+root@archiso ~ # gdisk /dev/nvme0n1p1
 
 GPT fdisk (gdisk) version 1.0.10
 
@@ -194,39 +190,20 @@ Partition table scan:
 
 Found valid GPT with protective MBR; using GPT.
 
-                     _[create partition 1: efi]_
+                     _[create partition 1: BOOT]_
+
 Command (? for help): n
-Partition number (1-128, default 1): 1
-First sector (34-976773134, default = 2048) or {+-}size{KMGTP}: Enter ↵
-Last sector (2048-976773134, default = 976773119) or {+-}size{KMGTP}: +512M
+Partition number (1-128, default 1): Enter ↵
+First sector (34-2000409230, default = 2048) or {+-}size{KMGTP}: Enter ↵
+Last sector (2048-2000409230, default = 2000408575) or {+-}size{KMGTP}: 1G
 Current type is 8300 (Linux filesystem)
 Hex code or GUID (L to show codes, Enter = 8300): ef00
 Changed type of partition to 'EFI system partition'
-					 
-					 _[create partition 2: boot]_
-					 
-Command (? for help): n
-Partition number (2-128, default 2): 2
-First sector (34-976773134, default = 2048) or {+-}size{KMGTP}: Enter ↵
-Last sector (2048-976773134, default = 976773119) or {+-}size{KMGTP}: +512M
-Current type is 8300 (Linux filesystem)
-Hex code or GUID (L to show codes, Enter = 8300): 8300
-Changed type of partition to 'Linux Filesystem'
-                     
-                     _[create partition 3: swap]_
-                     
-Command (? for help): n               
-Partition number (3-128, default 3): Enter ↵
-First sector (34-976773134, default = 1050624) or {+-}size{KMGTP}: Enter ↵
-Last sector (1050624-976773134, default = 976773119) or {+-}size{KMGTP}: +4G
-Current type is 8300 (Linux filesystem)                  
-Hex code or GUID (L to show codes, Enter = 8300): 8200
-Changed type of partition to 'Linux swap'
-                     
-                     _[create partition 4: root]_
+					                      
+                     _[create partition 4: ROOT]_
                      
 Command (? for help): n    
-Partition number (4-128, default 4): 
+Partition number (4-128, default 4): Enter ↵
 First sector (34-976773134, default = 9439232) or {+-}size{KMGTP}: Enter ↵
 Last sector (9439232-976773134, default = 976773119) or {+-}size{KMGTP}: Enter ↵
 Current type is 8300 (Linux filesystem)
@@ -241,7 +218,7 @@ Final checks complete. About to write GPT data. THIS WILL OVERWRITE EXISTING
 PARTITIONS!!
 
 Do you want to proceed? (Y/N): Y
-OK; writing new GUID partition table (GPT) to /dev/sda.
+OK; writing new GUID partition table (GPT) to /dev/nvme0n1.
 The operation has completed successfully.
 ```
 
@@ -251,31 +228,21 @@ Use `lsblk` again for see the partitions that we've created ...
 
 ```shell
 root@archiso ~ # lsblk
-
-NAME       MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
-loop0        7:0    0 846.7M  1 loop /run/archiso/airootfs
-sda          8:0    0 465.8G  0 disk 
-├─sda1       8:1    0   512M  0 part 
-├─sda2       8:2    0   512M  0 part 
-├─sda3       8:3    0     4G  0 part 
-└─sda4       8:4    0 460.8G  0 part 
-sdb          8:16   1  28.9G  0 disk 
-├─sdb1       8:17   1  28.8G  0 part 
-│ └─ventoy 253:0    0   1.2G  1 dm   
-└─sdb2       8:18   1    32M  0 part 
-sr0         11:0    1  1024M  0 rom 
-```
-
-Format the [EFI] partition ...
-
-```shell
-mkfs.fat -F32 /dev/sda1
+NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+loop0         7:0    0 942.7M  1 loop /run/archiso/airootfs
+sda           8:0    1  28.9G  0 disk 
+├─sda1        8:1    1  28.8G  0 part 
+│ └─ventoy  253:0    0   1.3G  1 dm   
+└─sda2        8:2    1    32M  0 part 
+nvme0n1     259:0    0 953.9G  0 disk 
+├─nvme0n1p1 259:3    0  1023M  0 part 
+└─nvme0n1p2 259:4    0 952.9G  0 part 
 ```
 
 Format the [BOOT] partition ...
 
 ```shell
-mkfs.btrfs -f /dev/sda2
+mkfs.fat -F32 /dev/nvme0n1p1
 ```
 
 ### 1.11. Encrypting the [ROOT] Partition
@@ -283,7 +250,7 @@ mkfs.btrfs -f /dev/sda2
 Format the [ROOT] partition with LUKS encryption ...
 
 ```shell
-cryptsetup luksFormat --type luks2 /dev/sda4
+cryptsetup luksFormat --type luks2 /dev/nvme0n1p2
 # You will now be prompted for a password...
 ```
 
@@ -292,7 +259,7 @@ Open the encrypted  [ROOT] partition ...
 > You can change the label `cryptroot` with whatever you want, but make sure that you'll replace all the commands containing that label with your desired name.
 
 ```shell
-cryptsetup luksOpen /dev/sda4 cryptroot
+cryptsetup luksOpen /dev/nvme0n1p2 cryptroot
 # You will need to enter the password that you typed before
 ```
 
@@ -313,9 +280,11 @@ We will create additional subvolumes for more control over rolling back the syst
 - `@cache` -- `/var/cache`
 - `@home` -- `/home` (preserve user data)
 - `@snapshots` -- `/.snapshots` (is where the snapshots will be stored)
-- `@libvirt` -- `/var/lib/libvirt` (virtual machine images)
 - `@log` -- `/var/log` (excluding log files makes troubleshooting easier after reverting `/`)
-- `@tmp` -- `/var/tmp` (prevents transient files from bloating your snapshots over time)
+- `@var_tmp` -- `/var/tmp` (prevents transient files from bloating your snapshots over time)
+- `@tmp` -- `/tmp` (prevents transient files from bloating your snapshots over time)
+- `@images` -- `/var/lib/libvirt` (Virtual machine images QEMU KVM)
+- `@docker` -- `/var/lib/docker` (Docker volumes)
 
 For create them ...
 ```shell
@@ -323,9 +292,11 @@ btrfs su cr /mnt/@
 btrfs su cr /mnt/@cache
 btrfs su cr /mnt/@home
 btrfs su cr /mnt/@snapshots
-btrfs su cr /mnt/@libvirt
-btrfs su cr /mnt/@log
+btrfs su cr /mnt/@logs
+btrfs su cr /mnt/@var_tmp
 btrfs su cr /mnt/@tmp
+btrfs su cr /mnt/@images
+btrfs su cr /mnt/@docker
 umount /mnt
 ```
 
@@ -335,30 +306,32 @@ umount /mnt
 # Mount root
 mount -o compress=zstd:1,noatime,subvol=@ /dev/mapper/cryptroot /mnt
 # Create directories
-mkdir -p /mnt/{boot/efi,home,.snapshots,var/{cache,log,tmp,lib/libvirt}}
+mkdir -p /mnt/{boot/efi,home,.snapshots,tmp,var/{cache,log,tmp,lib/{libvirt,docker}}}
 # Mount /var/cache
 mount -o compress=zstd:1,noatime,subvol=@cache /dev/mapper/cryptroot /mnt/var/cache
 # Mount /home
 mount -o compress=zstd:1,noatime,subvol=@home /dev/mapper/cryptroot /mnt/home
 # Mount ./snapshots
 mount -o compress=zstd:1,noatime,subvol=@snapshots /dev/mapper/cryptroot /mnt/.snapshots
-# Mount /var/lib/libvirt
-mount -o compress=zstd:1,noatime,subvol=@libvirt /dev/mapper/cryptroot /mnt/var/lib/libvirt
 # Mount /var/log
-mount -o compress=zstd:1,noatime,subvol=@log /dev/mapper/cryptroot /mnt/var/log
+mount -o compress=zstd:1,noatime,subvol=@logs /dev/mapper/cryptroot /mnt/var/log
 # Mount /var/tmp
-mount -o compress=zstd:1,noatime,subvol=@tmp /dev/mapper/cryptroot /mnt/var/tmp
+mount -o compress=zstd:1,noatime,subvol=@var_tmp /dev/mapper/cryptroot /mnt/var/tmp
+# Mount /tmp
+mount -o compress=zstd:1,noatime,subvol=@tmp /dev/mapper/cryptroot /mnt/tmp
+# Mount /var/lib/libvirt
+mount -o compress=zstd:1,noatime,subvol=@images /dev/mapper/cryptroot /mnt/var/lib/libvirt
+# Mount /var/lib/docker
+mount -o compress=zstd:1,noatime,subvol=@docker /dev/mapper/cryptroot /mnt/var/lib/docker
 ```
 
-Mount [BOOT] and [ESP] partitions ...
+Mount [BOOT] partition ...
 
 ```shell
-# Mount BOOT partition
-mount -o compress=zstd:1,noatime /dev/sda2 /mnt/boot
 # Create directory for ESP
-mkdir /mnt/boot/efi
+mkdir /mnt/boot
 # Mount ESP partition
-mount /dev/sda1 /mnt/boot/efi
+mount /dev/nvme0n1p1 /mnt/boot
 ```
 
 Verify if all the driver are correctly mounted ...
@@ -366,22 +339,23 @@ Verify if all the driver are correctly mounted ...
 ```shell
 root@archiso ~ # lsblk
 NAME          MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
-loop0           7:0    0 846.7M  1 loop  /run/archiso/airootfs
-sda             8:0    0 465.8G  0 disk  
-├─sda1          8:1    0   512M  0 part  /mnt/boot
-├─sda2          8:2    0   512M  0 part  /mnt/boot/efi
-├─sda3          8:3    0     4G  0 part  
-└─sda4          8:4    0 460.8G  0 part  
-  └─cryptroot 253:1    0 460.7G  0 crypt /mnt/.snapshots
+loop0           7:0    0 942.7M  1 loop  
+sda             8:0    1  28.9G  0 disk  
+├─sda1          8:1    1  28.8G  0 part  
+│ └─ventoy    253:0    0   1.3G  1 dm    
+└─sda2          8:2    1    32M  0 part  
+nvme0n1       259:0    0 953.9G  0 disk  
+├─nvme0n1p1   259:3    0  1023M  0 part  /mnt/boot
+└─nvme0n1p2   259:4    0 952.9G  0 part  
+  └─cryptroot 253:1    0 952.9G  0 crypt /mnt/var/lib/docker
+                                         /mnt/var/lib/libvirt
+                                         /mnt/tmp
+                                         /mnt/var/tmp
                                          /mnt/var/log
+                                         /mnt/.snapshots
                                          /mnt/home
                                          /mnt/var/cache
                                          /mnt
-sdb             8:16   1  28.9G  0 disk  
-├─sdb1          8:17   1  28.8G  0 part  
-│ └─ventoy    253:0    0   1.2G  1 dm    
-└─sdb2          8:18   1    32M  0 part  
-sr0            11:0    1  1024M  0 rom   
 ```
 
 ### 1.13. Install Base System
@@ -408,7 +382,7 @@ export microcode="amd-ucode"
 Then, Install the base system ...
 
 ```shell
-pacstrap -K /mnt base base-devel linux linux-firmware linux-headers ${microcode} btrfs-progs efibootmgr lvm2 cryptsetup neovim openssh reflector ${microcode} man-db mlocate networkmanager pacman-contrib sudo pkgfile micro zsh grub grub-btrfs kbd git
+pacstrap -K /mnt base base-devel linux linux-firmware linux-headers ${microcode} btrfs-progs efibootmgr lvm2 cryptsetup neovim openssh reflector ${microcode} man-db mlocate networkmanager pacman-contrib sudo pkgfile micro zsh grub grub-btrfs kbd git wget
 ```
 
 ### 1.14. Generate Fstab
@@ -431,7 +405,7 @@ arch-chroot /mnt
  Format the SWAP Partition with LUKS:
 
 ```shell
-cryptsetup luksFormat --type luks2 /dev/sda3
+cryptsetup luksFormat --type luks2 /dev/nvme0n1p2
 ```
 
 Create the directory for store the key
@@ -442,7 +416,7 @@ mkdir -p /etc/keys
 Generate the key ...
 
 ```
-dd if=/dev/random of=/etc/swap.key bs=1 count=4096 status=progress
+dd if=/dev/random of=/etc/keys/swap.key bs=1 count=4096 status=progress
 ```
 
 Restrict permissions ...
@@ -454,7 +428,7 @@ chmod 600 /etc/keys/swap.key
 Adding the key to the SWAP partition ...
 
 ```shell
-cryptsetup luksAddKey /dev/sda3 /etc/keys/swap.key
+cryptsetup luksAddKey /dev/nvme0n1p2 /etc/keys/swap.key
 ```
 
 Open the encrypted SWAP partition with the added key:
@@ -513,7 +487,7 @@ Generate a new mirror selection using [reflector](https://wiki.archlinux.org/ind
 *Example:* Verbosely select the 12 most recently synchronized HTTPS mirrors, sort them by download speed, and overwrite `mirrorlist` ...
 
 ```shell
-sudo reflector --latest 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist
+sudo reflector --latest 12 --protocol https --sort rate --save /etc/pacman.d/mirrorlist --verbose
 ```
 
 Then do ...
@@ -704,19 +678,19 @@ Determine the UUID of the [ROOT] encrypted partition ...
 
 ```shell
 # UUID FROM ENCRYPTED DISK
-blkid /dev/sda4 -o value -s UUID
+blkid /dev/nvme0n1p2 -o value -s UUID
 ```
 
 Edit the line `GRUB_CMDLINE_LINUX_DEFAULT` on `/etc/default/grub`:
 
 ```shell
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet cryptdevice=UUID-OF-ENCRYPTED-PARTITION:cryptroot root=/dev/mapper/cryptroot resume=/dev/mapper/cryptswap"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet cryptdevice=UUID=UUID-OF-ENCRYPTED-PARTITION:cryptroot root=/dev/mapper/cryptroot resume=/dev/mapper/cryptswap"
 ```
 
 *Example:* If the UUID of the encrypted partition was `180901b5-151a-45e3-ba87-28f02b124666`, then ...
 
 ```shell
-GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet cryptdevice=180901b5-151a-45e3-ba87-28f02b124666:cryptroot root=/dev/mapper/cryptroot resume=/dev/mapper/cryptswap"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet cryptdevice=UUID=180901b5-151a-45e3-ba87-28f02b124666:cryptroot root=/dev/mapper/cryptroot resume=/dev/mapper/cryptswap"
 ```
 
 Uncomment the line `GRUB_ENABLE_CRYPTODISK`:
