@@ -141,6 +141,9 @@ Enter you previously created password and that's all, you can do the installatio
 ```shell
 timedatectl set-ntp true # For sync the time
 timedatectl status # Check if the system time is correct.
+
+# If the time is incorrect, you can set it to your timezone
+timedatectl set-timezone <your_timezone> # eg: America/New_York
 ```
 
 ### 1.7. Partition the Disks
