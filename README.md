@@ -544,7 +544,7 @@ pacman --noconfirm -S bluez bluez-utils cups cups-pdf exa bat duf btop zip unzip
 [KDE PLASMA](https://kde.org/plasma-desktop/) (D.E.)...
 
 ```shell
-pacman --noconfirm -S sddm plasma-desktop plasma-meta
+pacman --noconfirm -S sddm plasma-desktop plasma-meta # add plasma-x11-session if using X11
 ```
 
 ![](assets/Plasma.jpg)
